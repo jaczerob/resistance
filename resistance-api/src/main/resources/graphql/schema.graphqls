@@ -1,0 +1,42 @@
+type Query {
+    groups: [Group!]!
+    groupById(id: String!): Group
+
+    toons: [Toon!]!
+    toonById(id: String!): Toon
+}
+
+type Gag {
+    gagType: String!
+    level: Int!
+    organic: Boolean!
+}
+
+type Toon {
+    id: ID!
+    name: String!
+    laff: Int!
+    species: String!
+
+    toonUpGag: Gag!
+    trapGag: Gag!
+    lureGag: Gag!
+    soundGag: Gag!
+    throwGag: Gag!
+    squirtGag: Gag!
+    dropGag: Gag!
+}
+
+type GroupFilter {
+    groupFilterType: String!
+    description: String!
+}
+
+type Group {
+    id: ID!
+    leader: Toon
+    toons: [Toon!]!
+    filters: [GroupFilter!]!
+    groupType: String!
+    maxSize: Int!
+}
