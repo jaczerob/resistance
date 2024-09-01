@@ -2,19 +2,21 @@ package dev.jaczerob.resistance.api.models.groups;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import dev.jaczerob.resistance.api.models.gags.GagType;
 import dev.jaczerob.resistance.api.models.toons.Toon;
 
-import java.util.Arrays;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.function.BiFunction;
 
 public class GroupFilter {
-    private final GroupFilterType groupFilterType;
-    private final String description;
+    private GroupFilterType groupFilterType;
+    private String description;
     @JsonIgnore
-    private final Function<Toon, Boolean> filter;
+    private BiFunction<Group, Toon, Boolean> filter;
 
-    private GroupFilter(final GroupFilterType groupFilterType, final String description, final Function<Toon, Boolean> filter) {
+    public GroupFilter() {
+    }
+
+    private GroupFilter(final GroupFilterType groupFilterType, final String description, final BiFunction<Group, Toon, Boolean> filter) {
         this.groupFilterType = groupFilterType;
         this.description = description;
         this.filter = filter;
@@ -29,21 +31,27 @@ public class GroupFilter {
         return this.description;
     }
 
-    public boolean check(final Toon toon) {
-        return this.filter.apply(toon);
+    public void setGroupFilterType(GroupFilterType groupFilterType) {
+        this.groupFilterType = groupFilterType;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public boolean check(final Group group, final Toon toon) {
+        return this.filter.apply(group, toon);
     }
 
     public static GroupFilter laff(final int laff) {
-        return new GroupFilter(GroupFilterType.LAFF, "Min Laff: %d".formatted(laff), (t) -> t.laff() >= laff);
+        return new GroupFilter(GroupFilterType.LAFF, "Min Laff: %d".formatted(laff), (g, t) -> t.laff() >= laff);
     }
 
-    public static GroupFilter gags(final GagFilter... gagFilters) {
-        return new GroupFilter(GroupFilterType.LAFF, Arrays.stream(gagFilters).map(GagFilter::toString).collect(Collectors.joining(", ")), (t) -> {
-            for (final GagFilter gagFilter : gagFilters)
-                if (t.getGagOfType(gagFilter.gagType()).getLevel() < gagFilter.level())
-                    return false;
+    public static GroupFilter gag(final GagType gagType, final int minLevel) {
+        return new GroupFilter(GroupFilterType.LAFF, "Min %s: %d".formatted(gagType, minLevel), (g, t) -> t.getGagOfType(gagType).getLevel() >= minLevel);
+    }
 
-            return true;
-        });
+    public static GroupFilter size(final int maxSize) {
+        return new GroupFilter(GroupFilterType.LAFF, "Max Size: %d".formatted(maxSize), (g, t) -> g.toons().size() + 1 < maxSize);
     }
 }

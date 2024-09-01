@@ -11,16 +11,12 @@ public record Group(
         List<Toon> toons,
         GroupFilter[] filters,
         GroupType groupType,
-        int maxSize,
         String location,
         String district
 ) {
     public boolean canAdd(final Toon toon) {
-        if (this.toons.size() + 1 >= this.maxSize)
-            return false;
-
         for (final GroupFilter filter : this.filters)
-            if (!filter.check(toon))
+            if (!filter.check(this, toon))
                 return false;
 
         return true;

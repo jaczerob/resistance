@@ -1,6 +1,7 @@
 package dev.jaczerob.resistance.api.models.toons;
 
-import dev.jaczerob.resistance.api.models.gags.*;
+import dev.jaczerob.resistance.api.models.gags.Gag;
+import dev.jaczerob.resistance.api.models.gags.GagType;
 
 import java.util.UUID;
 
@@ -10,13 +11,13 @@ public record Toon(
         int laff,
         Species species,
 
-        ToonUpGag toonUpGag,
-        TrapGag trapGag,
-        LureGag lureGag,
-        SoundGag soundGag,
-        ThrowGag throwGag,
-        SquirtGag squirtGag,
-        DropGag dropGag
+        Gag toonUpGag,
+        Gag trapGag,
+        Gag lureGag,
+        Gag soundGag,
+        Gag throwGag,
+        Gag squirtGag,
+        Gag dropGag
 ) {
     public Gag getGagOfType(final GagType gagType) {
         return switch (gagType) {

@@ -7,74 +7,74 @@ import dev.jaczerob.resistance.api.models.groups.GroupType;
 import dev.jaczerob.resistance.api.models.toons.Toon;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class GroupService {
-    private final Set<Group> groups = ConcurrentHashMap.newKeySet();
-    private final Set<Toon> toonsInGroups = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Group> groups = new ConcurrentHashMap<>();
+    private final Map<UUID, UUID> toonsInGroups = new ConcurrentHashMap<>();
 
-    public Group addToGroup(final Group group, final Toon toon) throws ResistanceException {
-        if (this.toonsInGroups.contains(toon) || groupContainsToon(group, toon)) {
+    public void addToGroup(final Group group, final Toon toon) throws ResistanceException {
+        if (this.toonsInGroups.containsKey(toon.id())) {
             throw new ToonAlreadyInGroupException(toon);
         } else if (!group.canAdd(toon)) {
             throw new ToonFailedCheckException(toon);
         } else {
             group.toons().add(toon);
-            return group;
         }
     }
 
-    public Group removeFromGroup(final Group group, final Toon toon) throws ResistanceException {
-        if (!this.toonsInGroups.contains(toon) || !groupContainsToon(group, toon)) {
+    public void removeFromGroup(final Group group, final Toon toon) throws ResistanceException {
+        if (!groupContainsToon(group, toon)) {
             throw new ToonNotInGroupException(toon);
         } else if (group.leader().equals(toon)) {
             throw new ToonIsLeaderException(toon);
         } else {
             group.toons().remove(toon);
-            return group;
         }
     }
 
-    public void deleteGroup(final Group group) throws ResistanceException {
-        if (!this.groups.remove(group)) {
-            throw new GroupNotExistsException(group);
+    public void deleteGroup(final UUID groupId) throws ResistanceException {
+        final Group group = this.groups.remove(groupId);
+        if (group == null) {
+            throw new GroupNotExistsException(groupId);
         }
 
-        this.toonsInGroups.remove(group.leader());
-        group.toons().forEach(this.toonsInGroups::remove);
+        this.toonsInGroups.remove(group.leader().id());
+        group.toons().stream().map(Toon::id).forEach(this.toonsInGroups::remove);
     }
 
-    public Group createGroup(final Toon toon, final GroupType groupType, final int maxSize, final String location, final String district, final GroupFilter... groupFilters) throws ResistanceException {
-        if (this.toonsInGroups.contains(toon)) {
+    public Group createGroup(final Toon toon, final GroupType groupType, final String location, final String district, final GroupFilter[] groupFilters) throws ResistanceException {
+        if (this.toonsInGroups.containsKey(toon.id())) {
             throw new ToonAlreadyInGroupException(toon);
         }
 
-        this.toonsInGroups.add(toon);
-
-        final Group group = new Group(UUID.randomUUID(), toon, List.of(), groupFilters, groupType, maxSize, location, district);
-        this.groups.add(group);
+        final Group group = new Group(UUID.randomUUID(), toon, new CopyOnWriteArrayList<>(), groupFilters, groupType, location, district);
+        this.toonsInGroups.put(toon.id(), group.id());
+        this.groups.put(group.id(), group);
 
         return group;
     }
 
     public Optional<Group> getGroup(final Toon toon) {
-        if (!this.toonsInGroups.contains(toon))
+        final UUID groupId = this.toonsInGroups.get(toon.id());
+        if (groupId == null)
             return Optional.empty();
 
-        return this.groups.stream().filter(group -> groupContainsToon(group, toon)).findFirst();
+        return Optional.ofNullable(this.groups.get(groupId));
     }
 
     public Optional<Group> getGroup(final UUID id) {
-        return this.groups.stream().filter(group -> group.id().equals(id)).findFirst();
+        return Optional.ofNullable(this.groups.get(id));
     }
 
     public Set<Group> getGroups() {
-        return Set.copyOf(this.groups);
+        return Set.copyOf(this.groups.values());
     }
 
     private static boolean groupContainsToon(final Group group, final Toon toon) {

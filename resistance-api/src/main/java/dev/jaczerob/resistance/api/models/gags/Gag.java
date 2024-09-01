@@ -1,11 +1,12 @@
 package dev.jaczerob.resistance.api.models.gags;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
+public class Gag {
+    private GagType gagType;
+    private int level;
+    private boolean isOrganic;
 
-public abstract class Gag {
-    private final GagType gagType;
-    private final int level;
-    private final boolean isOrganic;
+    public Gag() {
+    }
 
     public Gag(final GagType gagType, final int level, final boolean isOrganic) {
         this.gagType = gagType;
@@ -13,16 +14,27 @@ public abstract class Gag {
         this.isOrganic = isOrganic;
     }
 
-    @JsonGetter("gagType")
-    public String getGagType() {
-        return this.gagType.toString();
+    public GagType getGagType() {
+        return this.gagType;
     }
 
     public int getLevel() {
         return this.level;
     }
 
-    public boolean isOrganic() {
+    public boolean getIsOrganic() {
         return this.isOrganic;
+    }
+
+    public void setGagType(GagType gagType) {
+        this.gagType = gagType;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    public void setIsOrganic(boolean organic) {
+        isOrganic = organic;
     }
 }

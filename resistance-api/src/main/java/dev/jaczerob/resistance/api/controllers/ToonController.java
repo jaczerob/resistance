@@ -1,9 +1,11 @@
 package dev.jaczerob.resistance.api.controllers;
 
+import dev.jaczerob.resistance.api.exceptions.ResistanceException;
 import dev.jaczerob.resistance.api.models.requests.CreateToonRequest;
 import dev.jaczerob.resistance.api.models.toons.Toon;
 import dev.jaczerob.resistance.api.services.ToonService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,8 +23,8 @@ public class ToonController {
         this.toonService = toonService;
     }
 
-    @PostMapping
-    public ResponseEntity<Toon> createToon(final @RequestBody CreateToonRequest createToonRequest) {
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Toon> createToon(final @RequestBody CreateToonRequest createToonRequest) throws ResistanceException {
         final Toon toon = new Toon(
                 UUID.randomUUID(),
                 createToonRequest.name(),

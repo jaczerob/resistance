@@ -1,27 +1,41 @@
 package dev.jaczerob.resistance.api.services;
 
+import dev.jaczerob.resistance.api.exceptions.ResistanceException;
+import dev.jaczerob.resistance.api.exceptions.ToonExistsException;
 import dev.jaczerob.resistance.api.models.toons.Toon;
+import dev.jaczerob.resistance.api.repositories.toons.ToonEntity;
+import dev.jaczerob.resistance.api.repositories.toons.ToonRepository;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class ToonService {
-    private final Set<Toon> toons = ConcurrentHashMap.newKeySet();
+    private final ToonRepository toonRepository;
 
-    public Toon createToon(final Toon toon) {
-        this.toons.add(toon);
-        return toon;
+    public ToonService(final ToonRepository toonRepository) {
+        this.toonRepository = toonRepository;
+    }
+
+    public Toon createToon(final Toon toon) throws ResistanceException {
+        try {
+            final ToonEntity toonEntity = ToonEntity.fromToon(toon);
+            this.toonRepository.save(toonEntity);
+            return toon;
+        } catch (final ConstraintViolationException exc) {
+            throw new ToonExistsException(toon.id());
+        }
     }
 
     public Optional<Toon> getToon(final UUID id) {
-        return this.toons.stream().filter(toon -> toon.id().equals(id)).findFirst();
+        return this.toonRepository.findById(id).map(ToonEntity::toToon);
     }
 
     public Set<Toon> getToons() {
-        return Set.copyOf(this.toons);
+        return this.toonRepository.findAll().stream().map(ToonEntity::toToon).collect(Collectors.toUnmodifiableSet());
     }
 }
